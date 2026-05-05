@@ -24,3 +24,13 @@ module "vpc" {
   tags                  = var.tags
 }
 
+module "messaging" {
+  source = "../../modules/messaging"
+
+  name_prefix        = var.name_prefix
+  max_receive_count  = 3
+  create_dlq_alarm   = true
+  alarm_actions      = []  # TODO: add SNS topic ARN for email (Phase 4)
+  ok_actions         = []
+  tags               = var.tags
+}
