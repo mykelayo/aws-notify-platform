@@ -74,3 +74,19 @@ module "observability" {
 
   tags = var.tags
 }
+
+module "frontend" {
+  source = "../../modules/frontend"
+
+  name_prefix     = var.name_prefix
+  bucket_name     = "${var.name_prefix}-frontend-${random_string.suffix.result}"
+  sns_topic_arn   = module.messaging.sns_topic_arn
+  api_stage_name  = "prod"
+  tags            = var.tags
+}
+
+resource "random_string" "suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
