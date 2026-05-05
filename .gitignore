@@ -1,0 +1,17 @@
+# Terraform
+*.tfstate*
+*.tfvars
+.terraform/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Local scripts secrets
+scripts/*.env
