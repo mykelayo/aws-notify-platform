@@ -22,3 +22,8 @@ output "availability_zones" {
   description = "Availability zones used"
   value       = var.availability_zones
 }
+
+output "default_security_group_id" {
+  description = "ID of VPC's default security group"
+  value       = aws_vpc.this.default_security_group_id
+}
