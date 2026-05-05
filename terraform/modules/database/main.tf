@@ -73,3 +73,32 @@ resource "aws_rds_cluster_instance" "aurora_instance" {
 
   tags = var.tags
 }
+
+# Execute initial table creation (only if Data API enabled)
+resource "aws_rds_data_api_statement" "create_table" {
+  count = var.enable_data_api ? 1 : 0
+
+  resource_arn = aws_rds_cluster.aurora.arn
+  secret_arn   = aws_secretsmanager_secret.aurora_credentials.arn
+  database     = var.database_name
+  sql          = <<-SQL
+    CREATE TABLE IF NOT EXISTS messages (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      payload     JSONB NOT NULL,
+      received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      processed   BOOLEAN NOT NULL DEFAULT FALSE
+    );
+  SQL
+}
+
+resource "aws_secretsmanager_secret" "aurora_credentials" {
+  name = "${var.name_prefix}-aurora-creds"
+}
+
+resource "aws_secretsmanager_secret_version" "aurora_creds" {
+  secret_id = aws_secretsmanager_secret.aurora_credentials.id
+  secret_string = jsonencode({
+    username = var.master_username
+    password = var.master_password
+  })
+}
