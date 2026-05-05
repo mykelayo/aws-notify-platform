@@ -21,3 +21,7 @@ output "sqs_queue_url" {
 output "dlq_url" {
   value = module.messaging.dlq_url
 }
+
+output "lambda_function_name" {
+  value = module.compute.lambda_function_name
+}
