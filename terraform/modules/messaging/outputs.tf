@@ -22,3 +22,8 @@ output "dlq_url" {
   description = "URL of the DLQ"
   value       = aws_sqs_queue.dlq.id
 }
+
+output "dlq_name" {
+  description = "Name of the DLQ"
+  value       = aws_sqs_queue.dlq.name
+}
