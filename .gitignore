@@ -14,4 +14,4 @@ venv/
 .idea/
 
 # Local scripts secrets
-scripts/*.env
+scripts/*.envterraform.tfvars
