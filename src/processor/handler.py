@@ -1,58 +1,53 @@
 import json
 import os
-import logging
 import boto3
-from botocore.exceptions import ClientError
+import logging
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-# Environment variables set by Terraform
-CLUSTER_ARN = os.environ.get('AURORA_CLUSTER_ARN')
-SECRET_ARN = os.environ.get('AURORA_SECRET_ARN')
-DATABASE_NAME = os.environ.get('DATABASE_NAME', 'notifications')
-
-rds_data = boto3.client('rds-data')
+sns = boto3.client('sns')
+SNS_TOPIC_ARN = os.environ['SNS_TOPIC_ARN']
 
 def lambda_handler(event, context):
-    for record in event['Records']:
-        message_body = record.get('body', '{}')
-        logger.info(f"Processing message: {message_body}")
+    # Parse request body
+    try:
+        body = json.loads(event.get('body', '{}'))
+        message = body.get('message', '')
+    except Exception as e:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': 'Invalid JSON'})
+        }
 
-        # Parse JSON payload
-        try:
-            payload = json.loads(message_body)
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON: {e}")
-            # Do not retry – malformed message, send to DLQ by raising exception?
-            # SQS redrive policy will move to DLQ after maxReceiveCount.
-            raise
+    if not message:
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'error': 'Missing "message" field'})
+        }
 
-        # Insert into Aurora using Data API
-        if CLUSTER_ARN and SECRET_ARN:
-            try:
-                sql = """
-                    INSERT INTO messages (payload)
-                    VALUES (CAST(:payload AS JSONB))
-                """
-                response = rds_data.execute_statement(
-                    resourceArn=CLUSTER_ARN,
-                    secretArn=SECRET_ARN,
-                    database=DATABASE_NAME,
-                    sql=sql,
-                    parameters=[
-                        {
-                            'name': 'payload',
-                            'value': {'stringValue': json.dumps(payload)},
-                            'typeHint': 'JSON'
-                        }
-                    ]
-                )
-                logger.info(f"Insert successful: {response}")
-            except ClientError as e:
-                logger.error(f"Data API error: {e}")
-                raise  # triggers retry
-        else:
-            logger.warning("Aurora credentials not configured – skipping insert")
+    # Publish to SNS
+    try:
+        response = sns.publish(
+            TopicArn=SNS_TOPIC_ARN,
+            Message=json.dumps({'message': message, 'source': 'web-ui'}),
+            MessageAttributes={
+                'source': {
+                    'DataType': 'String',
+                    'StringValue': 'web-ui'
+                }
+            }
+        )
+        logger.info(f"Published message ID: {response['MessageId']}")
+    except Exception as e:
+        logger.error(f"Failed to publish: {e}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': 'Internal server error'})
+        }
 
-    return {'statusCode': 200}
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({'status': 'Message published'})
+    }
