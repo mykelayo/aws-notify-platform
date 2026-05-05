@@ -38,3 +38,36 @@ module "compute" {
 
   tags = var.tags
 }
+
+# Security group for Lambda (if not already defined)
+# We'll use the default VPC security group for now.
+# But better to create a dedicated Lambda security group.
+
+module "database" {
+  source = "../../modules/database"
+
+  name_prefix            = var.name_prefix
+  vpc_id                 = module.vpc.vpc_id
+  private_subnet_ids     = module.vpc.private_subnet_ids
+  lambda_security_group_ids = [module.vpc.default_security_group_id]
+  master_username        = var.db_username
+  master_password        = var.db_password
+  database_name          = var.db_name
+  min_acus               = var.min_acus
+  max_acus               = var.max_acus
+  enable_data_api        = var.enable_data_api
+  deletion_protection    = var.deletion_protection
+
+  tags = var.tags
+}
+
+module "observability" {
+  source = "../../modules/observability"
+
+  name_prefix           = var.name_prefix
+  alert_email           = var.alert_email
+  dlq_queue_name        = module.messaging.dlq_name
+  lambda_function_name  = module.compute.lambda_function_name
+
+  tags = var.tags
+}
