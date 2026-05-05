@@ -13,8 +13,13 @@ plan:
 apply:
 	cd terraform/environments/dev && terraform apply
 
-destroy:
-	cd terraform/environments/dev && terraform destroy
+# Destroy all infrastructure
+tf-destroy:
+	cd terraform/environments/dev && terraform destroy -auto-approve
+
+# Scheduled destroy (for cron jobs)
+schedule-destroy:
+	@echo "0 0 * * 0 cd $(PWD)/terraform/environments/dev && terraform destroy -auto-approve" | crontab -
 
 test:
 	pytest src/
@@ -29,3 +34,9 @@ build-lambda:
 	cp handler.py ./package/ && \
 	cd package && zip -r ../lambda.zip . && \
 	cd .. && rm -rf package
+
+build-publisher:
+	cd src/publisher && \
+	pip install -r requirements.txt -t ./package && \
+	cp handler.py ./package/ && \
+	cd package && zip -r ../lambda.zip . && cd .. && rm -rf package
