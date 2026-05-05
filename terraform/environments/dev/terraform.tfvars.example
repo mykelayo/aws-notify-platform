@@ -1,1 +1,4 @@
-aws_region = "us-east-1"
+aws_region    = "us-east-1"
+name_prefix   = "aws-notify"
+db_password   = "MySecurePass123!"
+alert_email   = "aide-correct-manor@duck.com"
