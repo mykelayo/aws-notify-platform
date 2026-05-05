@@ -69,6 +69,18 @@ variable "sqs_batch_size" {
   default     = 1
 }
 
+variable "aurora_secret_arn" {
+  description = "Secrets Manager ARN for DB credentials"
+  type        = string
+  default     = ""
+}
+
+variable "database_name" {
+  description = "Database name for Data API"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

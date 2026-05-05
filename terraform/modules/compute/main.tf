@@ -1,3 +1,11 @@
+environment {
+  variables = merge(var.environment_variables, {
+    AURORA_CLUSTER_ARN = var.aurora_cluster_arn
+    AURORA_SECRET_ARN  = var.aurora_secret_arn
+    DATABASE_NAME      = var.database_name
+  })
+}
+
 # IAM role for Lambda
 resource "aws_iam_role" "lambda_execution" {
   name = "${var.name_prefix}-lambda-execution-role"
@@ -91,3 +99,27 @@ resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   # Setting batch size to 1 for simplicity
   batch_size = var.sqs_batch_size
 }
+
+# IAM policy for Data API (execute SQL statements)
+resource "aws_iam_role_policy" "data_api" {
+  count = var.enable_aurora ? 1 : 0
+
+  name = "${var.name_prefix}-lambda-data-api"
+  role = aws_iam_role.lambda_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "rds-data:ExecuteStatement",
+          "rds-data:BatchExecuteStatement"
+        ]
+        Resource = var.aurora_cluster_arn
+      }
+    ]
+  })
+}
+
+
