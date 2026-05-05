@@ -1,4 +1,4 @@
-.PHONY: init plan apply destroy test lint bootstrap
+.PHONY: init plan apply destroy test lint bootstrap build-lambda
 
 bootstrap:
 	chmod +x scripts/bootstrap-state.sh
@@ -22,3 +22,10 @@ test:
 lint:
 	ruff check src/
 	terraform fmt -recursive terraform/
+
+build-lambda:
+	cd src/processor && \
+	pip install -r requirements.txt -t ./package && \
+	cp handler.py ./package/ && \
+	cd package && zip -r ../lambda.zip . && \
+	cd .. && rm -rf package
