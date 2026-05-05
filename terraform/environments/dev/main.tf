@@ -28,6 +28,9 @@ module "compute" {
   lambda_timeout_seconds = var.lambda_timeout_seconds
   lambda_memory_mb      = var.lambda_memory_mb
 
+  enable_aurora       = true
+  aurora_cluster_arn  = module.database.cluster_arn
+
   enable_vpc        = true
   private_subnet_ids = module.vpc.private_subnet_ids
   # For now, no security group for Lambda (will create one later for Aurora)
