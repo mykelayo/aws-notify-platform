@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>AWS Notify Platform</title></head>
+<body>
+<h1>Send Notification</h1>
+<input type="text" id="message" placeholder="Enter message" size="50">
+<button onclick="publish()">Send</button>
+<p id="result"></p>
+<script>
+    const API_URL = 'API_GATEWAY_URL'; // Replace after deployment
+    async function publish() {
+        const msg = document.getElementById('message').value;
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: msg})
+        });
+        const data = await res.json();
+        document.getElementById('result').innerText = data.status || data.error;
+    }
+</script>
+</body>
+</html>
